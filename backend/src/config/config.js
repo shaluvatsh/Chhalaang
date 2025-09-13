@@ -39,6 +39,12 @@ module.exports = {
     }
   },
 
+  deepgram: {
+    apiKey: process.env.DEEPGRAM_API_KEY,
+    model: 'nova-2',
+    language: 'en-US'
+  },
+
   assemblyai: {
     apiKey: process.env.ASSEMBLYAI_API_KEY,
     language: 'en_us'
