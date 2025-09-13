@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = "https://tech-tiaras-api.vercel.app/api";
 
 interface CreateSessionData {
   doctorName: string;
@@ -17,7 +17,7 @@ interface SessionInfo {
 
 interface JoinSessionData {
   userName: string;
-  role: 'doctor' | 'patient';
+  role: "doctor" | "patient";
 }
 
 class SessionService {
@@ -28,18 +28,20 @@ class SessionService {
       baseURL: API_BASE_URL,
       timeout: 10000,
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
 
     // Request interceptor for debugging
     this.axiosInstance.interceptors.request.use(
       (config) => {
-        console.log(`📡 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        console.log(
+          `📡 API Request: ${config.method?.toUpperCase()} ${config.url}`
+        );
         return config;
       },
       (error) => {
-        console.error('❌ API Request Error:', error);
+        console.error("❌ API Request Error:", error);
         return Promise.reject(error);
       }
     );
@@ -47,11 +49,16 @@ class SessionService {
     // Response interceptor for error handling
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+        console.log(
+          `✅ API Response: ${response.status} ${response.config.url}`
+        );
         return response;
       },
       (error) => {
-        console.error('❌ API Response Error:', error.response?.data || error.message);
+        console.error(
+          "❌ API Response Error:",
+          error.response?.data || error.message
+        );
         return Promise.reject(error);
       }
     );
@@ -62,22 +69,30 @@ class SessionService {
    */
   async createSession(data: CreateSessionData): Promise<SessionInfo> {
     try {
-      const response = await this.axiosInstance.post('/session/create', data);
+      const response = await this.axiosInstance.post("/session/create", data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to create session');
+      throw new Error(
+        error.response?.data?.error || "Failed to create session"
+      );
     }
   }
 
   /**
    * Join an existing session
    */
-  async joinSession(sessionId: string, data: JoinSessionData): Promise<SessionInfo> {
+  async joinSession(
+    sessionId: string,
+    data: JoinSessionData
+  ): Promise<SessionInfo> {
     try {
-      const response = await this.axiosInstance.post(`/session/${sessionId}/join`, data);
+      const response = await this.axiosInstance.post(
+        `/session/${sessionId}/join`,
+        data
+      );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to join session');
+      throw new Error(error.response?.data?.error || "Failed to join session");
     }
   }
 
@@ -89,7 +104,7 @@ class SessionService {
       const response = await this.axiosInstance.get(`/session/${sessionId}`);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Session not found');
+      throw new Error(error.response?.data?.error || "Session not found");
     }
   }
 
@@ -98,10 +113,12 @@ class SessionService {
    */
   async endSession(sessionId: string): Promise<{ success: boolean }> {
     try {
-      const response = await this.axiosInstance.post(`/session/${sessionId}/end`);
+      const response = await this.axiosInstance.post(
+        `/session/${sessionId}/end`
+      );
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to end session');
+      throw new Error(error.response?.data?.error || "Failed to end session");
     }
   }
 
@@ -110,10 +127,10 @@ class SessionService {
    */
   async getActiveSessions(): Promise<SessionInfo[]> {
     try {
-      const response = await this.axiosInstance.get('/session/active');
+      const response = await this.axiosInstance.get("/session/active");
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to get sessions');
+      throw new Error(error.response?.data?.error || "Failed to get sessions");
     }
   }
 }
