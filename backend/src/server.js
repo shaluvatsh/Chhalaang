@@ -56,7 +56,9 @@ app.use(cors(corsOptions));
 
 // Socket.IO setup with enhanced CORS
 const io = socketIo(server, {
-  cors: corsOptions,
+  cors: {
+    origin: '*', // Allow all for testing; tighten in production
+  },
   transports: ['websocket', 'polling'],
   allowEIO3: true,
   pingTimeout: 60000,
@@ -72,8 +74,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check endpoint (keep for backward compatibility)
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.status(200).json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     service: 'AI Voice MER Backend',
     version: '1.0.0',
@@ -94,7 +96,7 @@ socketHandlers(io);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
-  
+
   // Don't expose internal errors in production
   if (process.env.NODE_ENV === 'production') {
     res.status(500).json({
@@ -114,7 +116,7 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     success: false,
     error: 'Route not found',
     path: req.originalUrl
