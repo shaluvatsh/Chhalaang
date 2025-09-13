@@ -1,4 +1,4 @@
-import { io, Socket } from 'socket.io-client';
+import { io, Socket } from "socket.io-client";
 
 class SocketService {
   private socket: Socket | null = null;
@@ -27,41 +27,40 @@ class SocketService {
       this.isConnecting = true;
 
       try {
-        this.socket = io('http://localhost:3001', {
-          transports: ['websocket', 'polling'],
+        this.socket = io("https://tech-tiaras-api.vercel.app/", {
+          transports: ["websocket", "polling"],
           upgrade: true,
           timeout: 20000,
           forceNew: false,
           reconnection: true,
           reconnectionAttempts: 5,
-          reconnectionDelay: 1000
+          reconnectionDelay: 1000,
         });
 
-        this.socket.on('connect', () => {
-          console.log('✅ Connected to server:', this.socket?.id);
+        this.socket.on("connect", () => {
+          console.log("✅ Connected to server:", this.socket?.id);
           this.isConnecting = false;
           resolve(this.socket!);
         });
 
-        this.socket.on('disconnect', (reason) => {
-          console.log('❌ Disconnected from server:', reason);
+        this.socket.on("disconnect", (reason) => {
+          console.log("❌ Disconnected from server:", reason);
           this.isConnecting = false;
         });
 
-        this.socket.on('connect_error', (error) => {
-          console.error('❌ Connection error:', error);
+        this.socket.on("connect_error", (error) => {
+          console.error("❌ Connection error:", error);
           this.isConnecting = false;
           reject(error);
         });
 
-        this.socket.on('reconnect', (attemptNumber) => {
+        this.socket.on("reconnect", (attemptNumber) => {
           console.log(`🔄 Reconnected after ${attemptNumber} attempts`);
         });
 
-        this.socket.on('reconnect_error', (error) => {
-          console.error('🔄❌ Reconnection failed:', error);
+        this.socket.on("reconnect_error", (error) => {
+          console.error("🔄❌ Reconnection failed:", error);
         });
-
       } catch (error) {
         this.isConnecting = false;
         reject(error);
