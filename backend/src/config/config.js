@@ -28,10 +28,15 @@ module.exports = {
     temperature: parseFloat(process.env.TEMPERATURE) || 0.3
   },
   
-  deepgram: {
-    apiKey: process.env.DEEPGRAM_API_KEY,
-    model: 'nova-2',
-    language: 'en-US'
+  elevenlabs: {
+    apiKey: process.env.ELEVENLABS_API_KEY,
+    voiceId: process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM', // Default: Rachel voice
+    modelId: process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2',
+    language: process.env.ELEVENLABS_LANGUAGE || 'en',
+    voiceSettings: {
+      stability: parseFloat(process.env.ELEVENLABS_VOICE_STABILITY) || 0.5,
+      similarity_boost: parseFloat(process.env.ELEVENLABS_VOICE_CLARITY) || 0.8
+    }
   },
   
   assemblyai: {

@@ -129,10 +129,28 @@ class MockAIService {
   }
 
   /**
-   * Check if we should use mock mode
+   * Check if we should use mock mode (for backward compatibility)
    */
   static shouldUseMockMode() {
     return process.env.USE_MOCK_AI === 'true' || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.includes('your-openai-api-key');
+  }
+
+  /**
+   * Check if we should use mock mode specifically for OpenAI (MER generation)
+   */
+  static shouldUseMockOpenAI() {
+    return process.env.USE_MOCK_AI === 'true' || 
+           process.env.USE_MOCK_OPENAI === 'true' || 
+           !process.env.OPENAI_API_KEY || 
+           process.env.OPENAI_API_KEY.includes('PASTE_YOUR_ACTUAL_OPENAI_API_KEY_HERE');
+  }
+
+  /**
+   * Check if we should use mock mode for transcription services
+   */
+  static shouldUseMockTranscription() {
+    return process.env.USE_MOCK_AI === 'true' || 
+           process.env.USE_MOCK_TRANSCRIPTION === 'true';
   }
 }
 

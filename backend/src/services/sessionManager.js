@@ -61,6 +61,38 @@ class SessionManager {
   }
 
   /**
+   * Get the raw activeSessions Map for internal operations
+   */
+  getActiveSessionsMap() {
+    return activeSessions;
+  }
+
+  /**
+   * Cleanup inactive sessions
+   */
+  cleanupInactiveSessions(maxInactiveHours = 4) {
+    const now = new Date();
+    const maxInactiveTime = maxInactiveHours * 60 * 60 * 1000;
+    let cleanedCount = 0;
+
+    for (const [sessionId, session] of activeSessions.entries()) {
+      const timeSinceLastActivity = now - session.metadata.lastActivity;
+      
+      if (timeSinceLastActivity > maxInactiveTime) {
+        activeSessions.delete(sessionId);
+        console.log(`🗑️ Cleaned up inactive session: ${sessionId}`);
+        cleanedCount++;
+      }
+    }
+
+    if (cleanedCount > 0) {
+      console.log(`🧹 Cleaned up ${cleanedCount} inactive sessions`);
+    }
+    
+    return cleanedCount;
+  }
+
+  /**
    * Add user to session
    */
   addUserToSession(sessionId, userRole, socketId) {
@@ -254,18 +286,18 @@ class SessionManager {
   /**
    * Create or get session with custom ID
    */
-  createOrGetSession(sessionId, doctorName = 'Doctor', patientName = null) {
+  createOrGetSession(sessionId, userName = 'Unknown', userRole = 'doctor') {
     let session = activeSessions.get(sessionId);
     if (!session) {
       session = {
         id: sessionId,
         doctor: {
-          name: doctorName,
+          name: userRole === 'doctor' ? userName : 'Doctor',
           socketId: null,
           joinedAt: null
         },
         patient: {
-          name: patientName,
+          name: userRole === 'patient' ? userName : 'Patient',
           socketId: null,
           joinedAt: null
         },
@@ -282,7 +314,7 @@ class SessionManager {
       };
       
       activeSessions.set(sessionId, session);
-      console.log(`📝 Session created/retrieved: ${sessionId}`);
+      console.log(`📝 Session created/retrieved: ${sessionId} by ${userRole}: ${userName}`);
     }
     return session;
   }

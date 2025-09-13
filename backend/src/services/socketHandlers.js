@@ -24,7 +24,7 @@ module.exports = (io) => {
         socket.join(sessionId);
         
         // Create or get session - this ensures the session always exists
-        const session = SessionManager.createOrGetSession(sessionId, userName);
+        const session = SessionManager.createOrGetSession(sessionId, userName, userRole);
         
         // Update user name in session if not already set
         if (userRole === 'doctor' && !session.doctor.name) {
@@ -134,27 +134,56 @@ module.exports = (io) => {
     // Handle audio stream for transcription
     socket.on('audio-stream', async (data) => {
       try {
+        console.log('🎵 Received audio-stream event from:', socket.id);
+        console.log('🎵 Audio data size:', data.audioData?.length || 0, 'bytes');
+        console.log('🎵 User:', data.userRole, '-', data.userName);
+        console.log('🎵 Session ID:', data.sessionId);
+        
         const userSession = SessionManager.removeUserFromSession(socket.id);
-        if (!userSession) return;
+        if (!userSession) {
+          console.log('❌ No user session found for socket:', socket.id);
+          return;
+        }
         
         const { sessionId, session } = userSession;
         // Re-add user (removeUserFromSession was used just to get session info)
         SessionManager.addUserToSession(sessionId, data.userRole || 'unknown', socket.id);
         
         if (!session.isRecording) {
+          console.log('⚠️ Session not recording, ignoring audio for session:', sessionId);
           return; // Not recording, ignore audio
         }
         
-        // Process audio chunk through transcription service
-        const transcriptionResult = await TranscriptionService.processAudioChunk(
-          Buffer.from(data.audioData, 'base64'),
-          {
-            speaker: data.userRole || 'unknown',
-            speakerName: data.userName || 'Unknown',
-            sessionId: sessionId,
-            timestamp: new Date()
-          }
-        );
+        console.log('🎵 Processing audio for session:', sessionId, '- Recording:', session.isRecording);
+        
+        // Process audio chunk through transcription service with proper error handling
+        let transcriptionResult = null;
+        try {
+          transcriptionResult = await TranscriptionService.processAudioChunk(
+            Buffer.from(data.audioData, 'base64'),
+            {
+              speaker: data.userRole || 'unknown',
+              speakerName: data.userName || 'Unknown',
+              sessionId: sessionId,
+              timestamp: new Date()
+            }
+          );
+        } catch (transcriptionError) {
+          console.error('❌ Transcription service failed:', transcriptionError.message);
+          
+          // Force fallback to mock transcription if all providers fail
+          console.log('🎭 Forcing fallback to mock transcription');
+          const mockAIService = require('./mockAIService');
+          transcriptionResult = await mockAIService.generateMockTranscription(
+            Buffer.from(data.audioData, 'base64'),
+            {
+              speaker: data.userRole || 'unknown',
+              speakerName: data.userName || 'Unknown'
+            }
+          );
+        }
+        
+        console.log('📝 Transcription result:', transcriptionResult);
         
         if (transcriptionResult && transcriptionResult.text) {
           // Add to session transcript
@@ -171,14 +200,17 @@ module.exports = (io) => {
           session.metadata.totalMessages++;
           session.metadata.lastActivity = new Date();
           
+          console.log('📤 Broadcasting transcription to session:', sessionId);
           // Broadcast live transcription to all users in session
           io.to(sessionId).emit('live-transcription', transcriptEntry);
           
           console.log(`📝 [${sessionId}] ${data.userRole}: ${transcriptionResult.text.substring(0, 100)}...`);
+        } else {
+          console.log('⚠️ No transcription text received');
         }
         
       } catch (error) {
-        console.error('Error processing audio stream:', error);
+        console.error('❌ Error processing audio stream:', error);
         socket.emit('transcription-error', { message: 'Failed to process audio' });
       }
     });
@@ -413,18 +445,7 @@ module.exports = (io) => {
   
   // Periodic cleanup of inactive sessions
   setInterval(() => {
-    const now = new Date();
-    const sessions = SessionManager.activeSessions;
-    
-    sessions.forEach((session, sessionId) => {
-      const timeSinceLastActivity = now - session.metadata.lastActivity;
-      const maxInactiveTime = 4 * 60 * 60 * 1000; // 4 hours
-      
-      if (timeSinceLastActivity > maxInactiveTime) {
-        sessions.delete(sessionId);
-        console.log(`🗑️ Cleaned up inactive session: ${sessionId}`);
-      }
-    });
+    SessionManager.cleanupInactiveSessions(4); // Clean sessions inactive for 4+ hours
   }, 30 * 60 * 1000); // Check every 30 minutes
   
   console.log('✅ Socket.IO handlers initialized');

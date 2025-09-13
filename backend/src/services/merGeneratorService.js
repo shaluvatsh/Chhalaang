@@ -25,7 +25,7 @@ class MERGeneratorService {
       }
 
       // Check if we should use mock mode
-      if (MockAIService.shouldUseMockMode()) {
+      if (MockAIService.shouldUseMockOpenAI()) {
         console.log('🎭 Using Mock AI Service for MER generation');
         return await MockAIService.generateMockMER(transcript);
       }
